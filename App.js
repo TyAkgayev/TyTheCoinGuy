@@ -1,14 +1,16 @@
 import { StatusBar } from 'expo-status-bar';
 import {
   StyleSheet, Text, View, ScrollView, TouchableOpacity,
-  TextInput, Animated, useWindowDimensions,
+  TextInput, Animated, useWindowDimensions, Image,
 } from 'react-native';
 import { useRef, useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { auth } from './firebaseConfig';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { auth, db } from './firebaseConfig';
 import LoginScreen from './screens/LoginScreen';
+import AdminConsole from './screens/AdminConsole';
 
 const Stack = createNativeStackNavigator();
 
@@ -39,13 +41,7 @@ const categories = [
   { name: 'Deals', emoji: '🏷️' },
 ];
 
-const products = [
-  { name: '1 oz American Gold Eagle (Random Year)', price: '$2,416.48', bg: '#f5e6b0' },
-  { name: '1 oz Silver Eagle Coin (Random Year)', price: '$34.61', bg: '#e8e8e8' },
-  { name: '1 oz Gold Buffalo Coin (Random Year)', price: '$2,370.45', bg: '#f5e6b0' },
-  { name: '10 oz Silver Bar', price: '$284.50', bg: '#e8e8e8' },
-  { name: '1 oz Canadian Maple Leaf Silver Coin', price: '$33.21', bg: '#e8e8e8' },
-];
+const metalBg = { Gold: '#f5e6b0', Silver: '#e8e8e8', Platinum: '#dce8f5', Palladium: '#e0f0e0', Rare: '#ede0f5' };
 
 const trustItems = [
   { icon: '🚚', title: 'FREE SHIPPING', sub: 'Orders over $499' },
@@ -222,9 +218,16 @@ function HomeScreen({ navigation }) {
   const { width } = useWindowDimensions();
   const isMobile = width < 700;
   const [user, setUser] = useState(null);
+  const [products, setProducts] = useState([]);
 
   useEffect(() => {
     return onAuthStateChanged(auth, setUser);
+  }, []);
+
+  useEffect(() => {
+    getDocs(query(collection(db, 'products'), where('featured', '==', true), orderBy('createdAt', 'desc')))
+      .then(snap => setProducts(snap.docs.map(d => ({ id: d.id, ...d.data() }))))
+      .catch(() => {});
   }, []);
 
   return (
@@ -362,13 +365,20 @@ function HomeScreen({ navigation }) {
               style={s.productScroll}
               contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 8, alignItems: 'center' }}
             >
-              {products.map((p) => (
-                <TouchableOpacity key={p.name} style={s.productCard}>
-                  <View style={[s.productImgBox, { backgroundColor: p.bg }]}>
-                    <Text style={s.productEmoji}>🪙</Text>
+              {products.length === 0 ? (
+                <View style={{ padding: 24 }}>
+                  <Text style={{ color: '#aaa', fontSize: 13 }}>No featured products yet. Add some from the admin console.</Text>
+                </View>
+              ) : products.map((p) => (
+                <TouchableOpacity key={p.id} style={s.productCard}>
+                  <View style={[s.productImgBox, { backgroundColor: metalBg[p.metal] || '#f0f0f0' }]}>
+                    {p.imageUrl
+                      ? <Image source={{ uri: p.imageUrl }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                      : <Text style={s.productEmoji}>🪙</Text>
+                    }
                   </View>
                   <Text style={s.productName}>{p.name}</Text>
-                  <Text style={s.productPrice}>{p.price}</Text>
+                  <Text style={s.productPrice}>${Number(p.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -508,6 +518,7 @@ export default function App() {
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="AdminConsole" component={AdminConsole} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -34,8 +34,9 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
     setError('');
     try {
-      await signInWithEmailAndPassword(auth, email.trim(), password);
-      navigation.replace('Home');
+      const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
+      const tokenResult = await credential.user.getIdTokenResult();
+      navigation.replace(tokenResult.claims.admin ? 'AdminConsole' : 'Home');
     } catch (e) {
       setError(friendlyError(e.code));
     } finally {
@@ -51,7 +52,7 @@ export default function LoginScreen({ navigation }) {
     setError('');
     try {
       await createUserWithEmailAndPassword(auth, email.trim(), password);
-      navigation.replace('Home');
+      navigation.replace('Home'); // new registrations are not admins
     } catch (e) {
       setError(friendlyError(e.code));
     } finally {
