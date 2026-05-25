@@ -109,6 +109,12 @@ export default function AdminConsole({ navigation }) {
     return { url, path };
   };
 
+  const withTimeout = (promise, ms = 10000) =>
+    Promise.race([
+      promise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
+    ]);
+
   const save = async () => {
     if (!form.name.trim()) { setError('Product name is required.'); return; }
     if (!form.price || isNaN(parseFloat(form.price))) { setError('Enter a valid price.'); return; }
@@ -119,7 +125,7 @@ export default function AdminConsole({ navigation }) {
       let imagePath = form.imagePath;
 
       if (imageUri && imageUri !== form.imageUrl) {
-        const uploaded = await uploadImage(imageUri);
+        const uploaded = await withTimeout(uploadImage(imageUri), 15000);
         imageUrl = uploaded.url;
         imagePath = uploaded.path;
       }
@@ -141,15 +147,21 @@ export default function AdminConsole({ navigation }) {
       };
 
       if (editingId) {
-        await updateDoc(doc(db, 'products', editingId), { ...data, updatedAt: serverTimestamp() });
+        await withTimeout(updateDoc(doc(db, 'products', editingId), { ...data, updatedAt: serverTimestamp() }));
       } else {
-        await addDoc(collection(db, 'products'), { ...data, createdAt: serverTimestamp() });
+        await withTimeout(addDoc(collection(db, 'products'), { ...data, createdAt: serverTimestamp() }));
       }
 
       setModalOpen(false);
       fetchProducts();
     } catch (e) {
-      setError('Save failed: ' + e.message);
+      if (e.message === 'timeout') {
+        setError('Request timed out. Make sure Firestore and Storage are enabled in your Firebase Console, and that your security rules allow writes.');
+      } else if (e.code === 'permission-denied') {
+        setError('Permission denied. Update your Firestore security rules to allow writes from authenticated users.');
+      } else {
+        setError('Save failed: ' + e.message);
+      }
     } finally {
       setSaving(false);
     }
