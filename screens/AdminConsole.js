@@ -207,11 +207,11 @@ export default function AdminConsole({ navigation }) {
     <View style={s.root}>
       {/* Header */}
       <View style={s.header}>
-        <View style={s.headerLeft}>
+        <TouchableOpacity style={s.headerLeft} onPress={() => navigation.navigate('Home')}>
           <View style={s.logoCircle}><Text style={s.logoCircleText}>TC</Text></View>
           <Text style={s.logoText}>TyTheCoinGuy</Text>
           <View style={s.adminBadge}><Text style={s.adminBadgeText}>ADMIN</Text></View>
-        </View>
+        </TouchableOpacity>
         <TouchableOpacity style={s.signOutBtn} onPress={() => signOut(auth).then(() => navigation.replace('Home'))}>
           <Text style={s.signOutText}>Sign Out</Text>
         </TouchableOpacity>

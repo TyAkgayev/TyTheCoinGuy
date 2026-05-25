@@ -218,10 +218,19 @@ function HomeScreen({ navigation }) {
   const { width } = useWindowDimensions();
   const isMobile = width < 700;
   const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    return onAuthStateChanged(auth, setUser);
+    return onAuthStateChanged(auth, async (u) => {
+      setUser(u);
+      if (u) {
+        const token = await u.getIdTokenResult();
+        setIsAdmin(!!token.claims.admin);
+      } else {
+        setIsAdmin(false);
+      }
+    });
   }, []);
 
   useFocusEffect(useCallback(() => {
@@ -248,6 +257,11 @@ function HomeScreen({ navigation }) {
 
             {isMobile ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                {isAdmin && (
+                  <TouchableOpacity style={s.adminLink} onPress={() => navigation.navigate('AdminConsole')}>
+                    <Text style={s.adminLinkText}>⚙</Text>
+                  </TouchableOpacity>
+                )}
                 {user ? (
                   <TouchableOpacity style={s.registerBtn} onPress={() => signOut(auth)}>
                     <Text style={s.registerText}>Sign Out</Text>
@@ -280,6 +294,11 @@ function HomeScreen({ navigation }) {
                   <TouchableOpacity style={s.livePricesBtn}>
                     <Text style={s.livePricesText}>● Live Prices</Text>
                   </TouchableOpacity>
+                  {isAdmin && (
+                    <TouchableOpacity style={s.adminLink} onPress={() => navigation.navigate('AdminConsole')}>
+                      <Text style={s.adminLinkText}>⚙ Admin</Text>
+                    </TouchableOpacity>
+                  )}
                   {user ? (
                     <>
                       <Text style={s.actionLink} numberOfLines={1}>{user.email}</Text>
@@ -452,6 +471,8 @@ const s = StyleSheet.create({
   registerText: { color: WHITE, fontSize: 13 },
   cartBtn: { backgroundColor: GOLD, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 4 },
   cartText: { color: WHITE, fontWeight: '700', fontSize: 13 },
+  adminLink: { borderWidth: 1, borderColor: GOLD, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 4 },
+  adminLinkText: { color: GOLD, fontSize: 12, fontWeight: '700' },
 
   // Nav — centered via flexGrow + justifyContent in contentContainerStyle
   nav: { flexDirection: 'row', flexGrow: 1, justifyContent: 'center' },
