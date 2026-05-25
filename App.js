@@ -7,7 +7,7 @@ import { useRef, useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from './firebaseConfig';
 import LoginScreen from './screens/LoginScreen';
 import AdminConsole from './screens/AdminConsole';
@@ -225,9 +225,9 @@ function HomeScreen({ navigation }) {
   }, []);
 
   useEffect(() => {
-    getDocs(query(collection(db, 'products'), where('featured', '==', true), orderBy('createdAt', 'desc')))
+    getDocs(query(collection(db, 'products'), where('featured', '==', true)))
       .then(snap => setProducts(snap.docs.map(d => ({ id: d.id, ...d.data() }))))
-      .catch(() => {});
+      .catch(e => console.error('Failed to load featured products:', e));
   }, []);
 
   return (
