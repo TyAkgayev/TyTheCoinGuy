@@ -4,6 +4,13 @@ import {
   TextInput, Animated, useWindowDimensions,
 } from 'react-native';
 import { useRef, useState, useEffect } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { auth } from './firebaseConfig';
+import LoginScreen from './screens/LoginScreen';
+
+const Stack = createNativeStackNavigator();
 
 const GOLD = '#C9A227';
 const DARK = '#111111';
@@ -211,9 +218,14 @@ function BannerCarousel() {
   );
 }
 
-export default function App() {
+function HomeScreen({ navigation }) {
   const { width } = useWindowDimensions();
   const isMobile = width < 700;
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    return onAuthStateChanged(auth, setUser);
+  }, []);
 
   return (
     <View style={s.root}>
@@ -250,10 +262,23 @@ export default function App() {
                   <TouchableOpacity style={s.livePricesBtn}>
                     <Text style={s.livePricesText}>● Live Prices</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity><Text style={s.actionLink}>Login</Text></TouchableOpacity>
-                  <TouchableOpacity style={s.registerBtn}>
-                    <Text style={s.registerText}>Register</Text>
-                  </TouchableOpacity>
+                  {user ? (
+                    <>
+                      <Text style={s.actionLink} numberOfLines={1}>{user.email}</Text>
+                      <TouchableOpacity style={s.registerBtn} onPress={() => signOut(auth)}>
+                        <Text style={s.registerText}>Sign Out</Text>
+                      </TouchableOpacity>
+                    </>
+                  ) : (
+                    <>
+                      <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                        <Text style={s.actionLink}>Login</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={s.registerBtn} onPress={() => navigation.navigate('Login')}>
+                        <Text style={s.registerText}>Register</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
                   <TouchableOpacity style={s.cartBtn}>
                     <Text style={s.cartText}>🛒 1</Text>
                   </TouchableOpacity>
@@ -476,3 +501,14 @@ const s = StyleSheet.create({
   footer: { backgroundColor: DARK, paddingVertical: 24, alignItems: 'center' },
   footerText: { color: '#666', fontSize: 12 },
 });
+
+export default function App() {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Login" component={LoginScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
