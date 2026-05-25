@@ -247,10 +247,25 @@ function HomeScreen({ navigation }) {
             </View>
 
             {isMobile ? (
-              /* Mobile top row: just cart */
-              <TouchableOpacity style={s.cartBtn}>
-                <Text style={s.cartText}>🛒 1</Text>
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                {user ? (
+                  <TouchableOpacity style={s.registerBtn} onPress={() => signOut(auth)}>
+                    <Text style={s.registerText}>Sign Out</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <>
+                    <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                      <Text style={s.actionLink}>Login</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={s.registerBtn} onPress={() => navigation.navigate('Login')}>
+                      <Text style={s.registerText}>Register</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+                <TouchableOpacity style={s.cartBtn}>
+                  <Text style={s.cartText}>🛒 1</Text>
+                </TouchableOpacity>
+              </View>
             ) : (
               <>
                 <View style={s.searchWrap}>
