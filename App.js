@@ -3,8 +3,8 @@ import {
   StyleSheet, Text, View, ScrollView, TouchableOpacity,
   TextInput, Animated, useWindowDimensions, Image,
 } from 'react-native';
-import { useRef, useState, useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { useRef, useState, useEffect, useCallback } from 'react';
+import { NavigationContainer, useFocusEffect } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -224,11 +224,11 @@ function HomeScreen({ navigation }) {
     return onAuthStateChanged(auth, setUser);
   }, []);
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     getDocs(query(collection(db, 'products'), where('featured', '==', true)))
       .then(snap => setProducts(snap.docs.map(d => ({ id: d.id, ...d.data() }))))
       .catch(e => console.error('Failed to load featured products:', e));
-  }, []);
+  }, []));
 
   return (
     <View style={s.root}>
