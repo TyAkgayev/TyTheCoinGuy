@@ -1,15 +1,14 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 
-// Replace these values with your Firebase project config:
-// Firebase Console → Project Settings → Your apps → Web app → SDK setup
 const firebaseConfig = {
-  apiKey: 'YOUR_API_KEY',
-  authDomain: 'YOUR_PROJECT_ID.firebaseapp.com',
-  projectId: 'YOUR_PROJECT_ID',
-  storageBucket: 'YOUR_PROJECT_ID.appspot.com',
-  messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-  appId: 'YOUR_APP_ID',
+  apiKey: 'AIzaSyDYCjuV9b7329doTRmgAUryCIfxiH6bYcA',
+  authDomain: 'tythecoinguy-92131.firebaseapp.com',
+  projectId: 'tythecoinguy-92131',
+  storageBucket: 'tythecoinguy-92131.firebasestorage.app',
+  messagingSenderId: '275299162143',
+  appId: '1:275299162143:web:35c13b8b3a2c2fecb35d2a',
+  measurementId: 'G-F7K9T7QN9Z',
 };
 
 const app = initializeApp(firebaseConfig);
