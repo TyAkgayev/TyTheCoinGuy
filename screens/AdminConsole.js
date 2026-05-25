@@ -125,9 +125,14 @@ export default function AdminConsole({ navigation }) {
       let imagePath = form.imagePath;
 
       if (imageUri && imageUri !== form.imageUrl) {
-        const uploaded = await withTimeout(uploadImage(imageUri), 15000);
-        imageUrl = uploaded.url;
-        imagePath = uploaded.path;
+        try {
+          const uploaded = await withTimeout(uploadImage(imageUri), 15000);
+          imageUrl = uploaded.url;
+          imagePath = uploaded.path;
+        } catch (imgErr) {
+          setError('Image upload failed — saving product without image. Enable Firebase Storage in your Firebase Console to support images.');
+          await new Promise(r => setTimeout(r, 2000));
+        }
       }
 
       const data = {
