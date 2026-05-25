@@ -11,6 +11,7 @@ import { collection, query, where, getDocs, orderBy, doc, getDoc } from 'firebas
 import { auth, db } from './firebaseConfig';
 import LoginScreen from './screens/LoginScreen';
 import AdminConsole from './screens/AdminConsole';
+import { IMAGES } from './config/images';
 
 const Stack = createNativeStackNavigator();
 
@@ -52,28 +53,23 @@ const PAYMENT_METHODS = ['VISA','MC','AMEX','DISCOVER','PAYPAL','BITCOIN','CHECK
 const PAYMENT_COLORS = { VISA:'#1a1f71', MC:'#eb001b', AMEX:'#007bc1', DISCOVER:'#f76f20', PAYPAL:'#003087', BITCOIN:'#f7931a', CHECK:'#2a7a2a', WIRE:'#555' };
 
 const WHY_ITEMS = [
-  { icon: '💰', title: 'Best Prices', sub: 'Price match guaranteed on all products' },
-  { icon: '🚚', title: 'Free Shipping', sub: 'On all orders over $499' },
-  { icon: '🔒', title: 'Secure & Insured', sub: 'Every shipment fully insured' },
-  { icon: '⭐', title: '4.8/5 Stars', sub: 'Over 400,000 verified reviews' },
-  { icon: '🏆', title: 'Expert Staff', sub: 'Real specialists, real advice' },
-  { icon: '📦', title: 'Wide Selection', sub: 'Thousands of products in stock' },
+  { imageKey: 'bestPrices',    emoji: '💰', title: 'Best Prices',       sub: 'Price match guaranteed on all products' },
+  { imageKey: 'freeShipping',  emoji: '🚚', title: 'Free Shipping',     sub: 'On all orders over $499' },
+  { imageKey: 'secure',        emoji: '🔒', title: 'Secure & Insured',  sub: 'Every shipment fully insured' },
+  { imageKey: 'stars',         emoji: '⭐', title: '4.8/5 Stars',       sub: 'Over 400,000 verified reviews' },
+  { imageKey: 'expertStaff',   emoji: '🏆', title: 'Expert Staff',      sub: 'Real specialists, real advice' },
+  { imageKey: 'wideSelection', emoji: '📦', title: 'Wide Selection',    sub: 'Thousands of products in stock' },
 ];
 
 const metalBg = { Gold: '#f5e6b0', Silver: '#e8e8e8', Platinum: '#dce8f5', Palladium: '#e0f0e0', Rare: '#ede0f5' };
 
-const DEFAULT_BANNERS = [
-  { title: '1 oz American\nGold Eagle Coin', sub: 'As low as $69.99 over spot', emoji: '🦅', coinColor: '#c9a227', coinInner: '#deb841', btnText: 'SHOP NOW', bg: '#1e1e1e' },
-  { title: 'Weekend Deal:\n10 oz Silver Bar', sub: 'Only $279.99 — Limited Time Offer', emoji: '🪙', coinColor: '#888888', coinInner: '#aaaaaa', btnText: 'GRAB THE DEAL', bg: '#171c26' },
-  { title: 'Free Shipping\nOn Orders Over $499', sub: 'No code needed — applied automatically at checkout', emoji: '🚚', coinColor: '#1e5c3a', coinInner: '#27ae60', btnText: 'SHOP ALL', bg: '#131a14' },
-  { title: 'Sell Your Metals\nGet Top Dollar', sub: 'Best payouts guaranteed — we beat any offer', emoji: '💰', coinColor: '#7a4f1e', coinInner: '#c9a227', btnText: 'GET A QUOTE', bg: '#1a1414' },
-];
+const DEFAULT_BANNERS = IMAGES.bannerSlides.map(s => ({ ...s, sub: s.subtitle }));
 
 const trustItems = [
-  { icon: '🚚', title: 'FREE SHIPPING', sub: 'Orders over $499' },
-  { icon: '💲', title: 'LOW PRICE GUARANTEE', sub: 'We beat competitors' },
-  { icon: '🔒', title: 'SECURE PAYMENTS', sub: '256-bit SSL encryption' },
-  { icon: '⭐', title: '4.8/5 STAR REVIEWS', sub: 'Over 400,500 reviews' },
+  { imageKey: 'shipping',       emoji: '🚚', title: 'FREE SHIPPING',        sub: 'Orders over $499' },
+  { imageKey: 'priceGuarantee', emoji: '💲', title: 'LOW PRICE GUARANTEE',  sub: 'We beat competitors' },
+  { imageKey: 'secure',         emoji: '🔒', title: 'SECURE PAYMENTS',      sub: '256-bit SSL encryption' },
+  { imageKey: 'reviews',        emoji: '⭐', title: '4.8/5 STAR REVIEWS',   sub: 'Over 400,500 reviews' },
 ];
 
 const bannerSlides = [
@@ -154,9 +150,9 @@ function BannerCarousel({ slides }) {
         <Animated.View style={{ flexDirection: 'row', width: containerWidth * slides.length, transform: [{ translateX: slideAnim }] }}>
           {slides.map((slide, i) => (
             <View key={i} style={{ width: containerWidth, backgroundColor: slide.bg, flexDirection: isMobile ? 'column' : 'row', paddingVertical: isMobile ? 32 : 40, paddingHorizontal: isMobile ? 24 : 40, minHeight: isMobile ? 260 : 280, alignItems: 'center', justifyContent: 'center', gap: 20, overflow: 'hidden' }}>
-              {/* Full background image if set */}
-              {slide.imageUrl ? (
-                <Image source={{ uri: slide.imageUrl }} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} resizeMode="cover" />
+              {/* Full background image — Firestore imageUrl takes priority, then local IMAGES config */}
+              {(slide.imageUrl || slide.image) ? (
+                <Image source={slide.imageUrl ? { uri: slide.imageUrl } : slide.image} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} resizeMode="cover" />
               ) : null}
               <View style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: slide.imageUrl ? 'rgba(0,0,0,0.45)' : 'transparent' }]} />
 
@@ -168,7 +164,7 @@ function BannerCarousel({ slides }) {
                 </TouchableOpacity>
               </View>
 
-              {!isMobile && !slide.imageUrl && (
+              {!isMobile && !slide.imageUrl && !slide.image && (
                 <View style={[s.heroCenter, { zIndex: 1 }]}>
                   <View style={[s.coinOuter, { backgroundColor: slide.coinColor || '#c9a227', shadowColor: slide.coinColor || '#c9a227' }]}>
                     <View style={[s.coinInner, { backgroundColor: slide.coinInner || '#deb841' }]}>
@@ -382,12 +378,14 @@ function HomeScreen({ navigation }) {
         {/* ── CATEGORIES ── */}
         <View style={s.categories}>
           {categories.map((cat) => {
-            const img = categoryImages[cat.slug]?.imageUrl;
+            const firestoreImg = categoryImages[cat.slug]?.imageUrl;
+            const localImg = IMAGES.categories[cat.slug];
+            const imgSrc = firestoreImg ? { uri: firestoreImg } : localImg || null;
             return (
               <TouchableOpacity key={cat.name} style={s.categoryItem}>
                 <View style={s.categoryIcon}>
-                  {img
-                    ? <Image source={{ uri: img }} style={{ width: '100%', height: '100%', borderRadius: 28 }} resizeMode="cover" />
+                  {imgSrc
+                    ? <Image source={imgSrc} style={{ width: '100%', height: '100%', borderRadius: 28 }} resizeMode="cover" />
                     : <Text style={s.categoryEmoji}>{cat.emoji}</Text>}
                 </View>
                 <Text style={s.categoryName}>{cat.name}</Text>
@@ -410,27 +408,37 @@ function HomeScreen({ navigation }) {
         <View style={s.whySection}>
           <Text style={s.sectionTitle}>WHY CHOOSE TYTHECOINGUY</Text>
           <View style={s.whyGrid}>
-            {WHY_ITEMS.map(w => (
-              <View key={w.title} style={s.whyCard}>
-                <Text style={s.whyIcon}>{w.icon}</Text>
-                <Text style={s.whyTitle}>{w.title}</Text>
-                <Text style={s.whySub}>{w.sub}</Text>
-              </View>
-            ))}
+            {WHY_ITEMS.map(w => {
+              const img = IMAGES.whyIcons[w.imageKey];
+              return (
+                <View key={w.title} style={s.whyCard}>
+                  {img
+                    ? <Image source={img} style={{ width: 40, height: 40 }} resizeMode="contain" />
+                    : <Text style={s.whyIcon}>{w.emoji}</Text>}
+                  <Text style={s.whyTitle}>{w.title}</Text>
+                  <Text style={s.whySub}>{w.sub}</Text>
+                </View>
+              );
+            })}
           </View>
         </View>
 
         {/* ── TRUST BADGES ── */}
         <View style={s.trust}>
-          {trustItems.map((t) => (
-            <View key={t.title} style={s.trustItem}>
-              <Text style={s.trustIcon}>{t.icon}</Text>
-              <View>
-                <Text style={s.trustTitle}>{t.title}</Text>
-                <Text style={s.trustSub}>{t.sub}</Text>
+          {trustItems.map((t) => {
+            const img = IMAGES.trustIcons[t.imageKey];
+            return (
+              <View key={t.title} style={s.trustItem}>
+                {img
+                  ? <Image source={img} style={{ width: 36, height: 36 }} resizeMode="contain" />
+                  : <Text style={s.trustIcon}>{t.emoji}</Text>}
+                <View>
+                  <Text style={s.trustTitle}>{t.title}</Text>
+                  <Text style={s.trustSub}>{t.sub}</Text>
+                </View>
               </View>
-            </View>
-          ))}
+            );
+          })}
         </View>
 
         {/* ── FOOTER ── */}
@@ -461,11 +469,13 @@ function HomeScreen({ navigation }) {
           <View style={s.footerPayRow}>
             <Text style={s.footerPayTitle}>MAJOR PAYMENT METHODS ACCEPTED</Text>
             <View style={s.footerPayBadges}>
-              {PAYMENT_METHODS.map(pm => (
-                <View key={pm} style={[s.payBadge, { backgroundColor: PAYMENT_COLORS[pm] }]}>
-                  <Text style={s.payBadgeText}>{pm}</Text>
-                </View>
-              ))}
+              {PAYMENT_METHODS.map(pm => {
+                const key = pm.toLowerCase();
+                const img = IMAGES.paymentMethods[key];
+                return img
+                  ? <Image key={pm} source={img} style={{ height: 28, width: 48 }} resizeMode="contain" />
+                  : <View key={pm} style={[s.payBadge, { backgroundColor: PAYMENT_COLORS[pm] }]}><Text style={s.payBadgeText}>{pm}</Text></View>;
+              })}
             </View>
           </View>
 
@@ -473,20 +483,20 @@ function HomeScreen({ navigation }) {
           <View style={s.footerAppRow}>
             <Text style={s.footerPayTitle}>DOWNLOAD OUR FREE APP TODAY</Text>
             <View style={s.appBtns}>
-              <TouchableOpacity style={s.appBtn}>
-                <Text style={s.appBtnIcon}>🍎</Text>
-                <View>
-                  <Text style={s.appBtnSub}>Download on the</Text>
-                  <Text style={s.appBtnMain}>App Store</Text>
-                </View>
-              </TouchableOpacity>
-              <TouchableOpacity style={s.appBtn}>
-                <Text style={s.appBtnIcon}>▶</Text>
-                <View>
-                  <Text style={s.appBtnSub}>Get it on</Text>
-                  <Text style={s.appBtnMain}>Google Play</Text>
-                </View>
-              </TouchableOpacity>
+              {IMAGES.appStoreBadge
+                ? <TouchableOpacity><Image source={IMAGES.appStoreBadge} style={{ height: 44, width: 140 }} resizeMode="contain" /></TouchableOpacity>
+                : <TouchableOpacity style={s.appBtn}>
+                    <Text style={s.appBtnIcon}>🍎</Text>
+                    <View><Text style={s.appBtnSub}>Download on the</Text><Text style={s.appBtnMain}>App Store</Text></View>
+                  </TouchableOpacity>
+              }
+              {IMAGES.googlePlayBadge
+                ? <TouchableOpacity><Image source={IMAGES.googlePlayBadge} style={{ height: 44, width: 140 }} resizeMode="contain" /></TouchableOpacity>
+                : <TouchableOpacity style={s.appBtn}>
+                    <Text style={s.appBtnIcon}>▶</Text>
+                    <View><Text style={s.appBtnSub}>Get it on</Text><Text style={s.appBtnMain}>Google Play</Text></View>
+                  </TouchableOpacity>
+              }
             </View>
           </View>
 
@@ -515,7 +525,9 @@ function ProductSection({ title, products, emptyMsg, accent, showSale }) {
               <View style={[s.productImgBox, { backgroundColor: metalBg[p.metal] || '#f0f0f0' }]}>
                 {p.imageUrl
                   ? <Image source={{ uri: p.imageUrl }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-                  : <Text style={s.productEmoji}>🪙</Text>}
+                  : IMAGES.productPlaceholder
+                    ? <Image source={IMAGES.productPlaceholder} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+                    : <Text style={s.productEmoji}>🪙</Text>}
               </View>
               <Text style={s.productName}>{p.name}</Text>
               {showSale && p.salePrice ? (
