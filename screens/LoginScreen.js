@@ -43,6 +43,15 @@ export default function LoginScreen({ navigation }) {
     try {
       const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
       const user = credential.user;
+
+      // Force-refresh token so custom claims (admin) are current
+      const tokenResult = await user.getIdTokenResult(true);
+      if (tokenResult.claims.admin) {
+        navigation.replace('AdminConsole');
+        return;
+      }
+
+      // Non-admin: enforce MFA flow
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       if (!userDoc.exists() || !userDoc.data().totpEnrolled) {
         navigation.replace('MfaEnroll', { fromRegistration: false });
@@ -67,7 +76,7 @@ export default function LoginScreen({ navigation }) {
         setError('Incorrect code. Check your authenticator app and try again.');
         return;
       }
-      const tokenResult = await auth.currentUser.getIdTokenResult();
+      const tokenResult = await auth.currentUser.getIdTokenResult(true);
       navigation.replace(tokenResult.claims.admin ? 'AdminConsole' : 'Home');
     } catch (e) {
       setError('Verification failed. Please try again.');
