@@ -154,7 +154,7 @@ function BannerCarousel({ slides }) {
       currentRef.current = next;
       setCurrent(next);
       Animated.timing(slideAnim, { toValue: -next * containerWidth, duration: 1400, easing: Easing.inOut(Easing.ease), useNativeDriver: true }).start();
-    }, 7000);
+    }, 4500);
     return () => clearInterval(timer);
   }, [containerWidth, slides.length]);
 
