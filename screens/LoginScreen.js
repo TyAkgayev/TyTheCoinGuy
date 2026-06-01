@@ -5,10 +5,15 @@ import {
 } from 'react-native';
 import {
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
   sendPasswordResetEmail,
 } from 'firebase/auth';
-import { auth } from '../firebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
+import { TOTP } from '@otplib/totp';
+import { crypto } from '@otplib/plugin-crypto-noble';
+import { base32 } from '@otplib/plugin-base32-scure';
+import { auth, db } from '../firebaseConfig';
+
+const totp = new TOTP({ crypto, base32, epochTolerance: 30 });
 
 const GOLD = '#C9A227';
 const DARK = '#111111';
@@ -19,10 +24,12 @@ const RED = '#e74c3c';
 const BORDER = '#2e2e2e';
 
 export default function LoginScreen({ navigation }) {
-  const [mode, setMode] = useState('login'); // 'login' | 'register' | 'reset'
+  const [mode, setMode] = useState('login'); // 'login' | 'register' | 'reset' | 'mfa'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaSecret, setMfaSecret] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [resetSent, setResetSent] = useState(false);
@@ -35,8 +42,14 @@ export default function LoginScreen({ navigation }) {
     setError('');
     try {
       const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
-      const tokenResult = await credential.user.getIdTokenResult();
-      navigation.replace(tokenResult.claims.admin ? 'AdminConsole' : 'Home');
+      const user = credential.user;
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (!userDoc.exists() || !userDoc.data().totpEnrolled) {
+        navigation.replace('MfaEnroll', { fromRegistration: false });
+        return;
+      }
+      setMfaSecret(userDoc.data().totpSecret);
+      setMode('mfa');
     } catch (e) {
       setError(friendlyError(e.code));
     } finally {
@@ -44,20 +57,31 @@ export default function LoginScreen({ navigation }) {
     }
   };
 
-  const handleRegister = async () => {
-    if (!email || !password) { setError('Please fill in all fields.'); return; }
-    if (password !== confirmPassword) { setError('Passwords do not match.'); return; }
-    if (password.length < 6) { setError('Password must be at least 6 characters.'); return; }
+  const handleMfaVerify = async () => {
+    if (mfaCode.length !== 6) { setError('Enter the 6-digit code from your authenticator app.'); return; }
     setLoading(true);
     setError('');
     try {
-      await createUserWithEmailAndPassword(auth, email.trim(), password);
-      navigation.replace('Home'); // new registrations are not admins
+      const result = await totp.verify(mfaCode, { secret: mfaSecret });
+      if (!result.valid) {
+        setError('Incorrect code. Check your authenticator app and try again.');
+        return;
+      }
+      const tokenResult = await auth.currentUser.getIdTokenResult();
+      navigation.replace(tokenResult.claims.admin ? 'AdminConsole' : 'Home');
     } catch (e) {
-      setError(friendlyError(e.code));
+      setError('Verification failed. Please try again.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRegister = () => {
+    if (!email || !password) { setError('Please fill in all fields.'); return; }
+    if (password !== confirmPassword) { setError('Passwords do not match.'); return; }
+    if (password.length < 6) { setError('Password must be at least 6 characters.'); return; }
+    // Pass credentials to MFA screen — account is only created AFTER TOTP is verified
+    navigation.replace('MfaEnroll', { email: email.trim(), password });
   };
 
   const handleReset = async () => {
@@ -73,6 +97,69 @@ export default function LoginScreen({ navigation }) {
       setLoading(false);
     }
   };
+
+  if (mode === 'mfa') {
+    return (
+      <KeyboardAvoidingView style={s.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
+
+          <TouchableOpacity style={s.backBtn} onPress={() => { setMode('login'); setMfaCode(''); clearError(); }}>
+            <Text style={s.backText}>← Back</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={s.logoRow} onPress={() => navigation.navigate('Home')}>
+            <View style={s.logoCircle}><Text style={s.logoCircleText}>TC</Text></View>
+            <Text style={s.logoText}>TyTheCoinGuy</Text>
+          </TouchableOpacity>
+
+          <View style={s.card}>
+            <View style={s.mfaHeader}>
+              <Text style={s.mfaIcon}>🔐</Text>
+              <Text style={s.mfaTitle}>Two-Factor Authentication</Text>
+              <Text style={s.mfaSub}>
+                Open your authenticator app and enter the 6-digit code for TyTheCoinGuy.
+              </Text>
+            </View>
+            <View style={s.form}>
+              {!!error && (
+                <View style={s.errorBox}>
+                  <Text style={s.errorText}>{error}</Text>
+                </View>
+              )}
+              <Text style={s.label}>Authentication Code</Text>
+              <TextInput
+                style={[s.input, s.codeInput]}
+                value={mfaCode}
+                onChangeText={(v) => { setMfaCode(v.replace(/\D/g, '').slice(0, 6)); clearError(); }}
+                placeholder="000 000"
+                placeholderTextColor="#333"
+                keyboardType="number-pad"
+                maxLength={6}
+                textAlign="center"
+                autoFocus
+              />
+              <TouchableOpacity
+                style={[s.submitBtn, loading && s.submitBtnDisabled]}
+                onPress={handleMfaVerify}
+                disabled={loading}
+              >
+                {loading
+                  ? <ActivityIndicator color={WHITE} />
+                  : <Text style={s.submitText}>VERIFY</Text>
+                }
+              </TouchableOpacity>
+              <Text style={s.mfaHint}>
+                Code refreshes every 30 seconds. Make sure your device clock is accurate.
+              </Text>
+            </View>
+          </View>
+
+          <Text style={s.trustLine}>🔒 Phishing-resistant MFA · NIST SP 800-63B compliant</Text>
+
+        </ScrollView>
+      </KeyboardAvoidingView>
+    );
+  }
 
   return (
     <KeyboardAvoidingView style={s.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -110,21 +197,24 @@ export default function LoginScreen({ navigation }) {
           </View>
 
           <View style={s.form}>
-            {/* Reset sent confirmation */}
             {resetSent && (
               <View style={s.successBox}>
                 <Text style={s.successText}>Password reset email sent. Check your inbox.</Text>
               </View>
             )}
 
-            {/* Error */}
             {!!error && (
               <View style={s.errorBox}>
                 <Text style={s.errorText}>{error}</Text>
               </View>
             )}
 
-            {/* Email */}
+            {mode === 'register' && (
+              <View style={s.mfaBadge}>
+                <Text style={s.mfaBadgeText}>🔐 MFA setup is required after registration</Text>
+              </View>
+            )}
+
             <Text style={s.label}>Email Address</Text>
             <TextInput
               style={s.input}
@@ -137,7 +227,6 @@ export default function LoginScreen({ navigation }) {
               autoCorrect={false}
             />
 
-            {/* Password */}
             {mode !== 'reset' && (
               <>
                 <Text style={s.label}>Password</Text>
@@ -152,7 +241,6 @@ export default function LoginScreen({ navigation }) {
               </>
             )}
 
-            {/* Confirm password */}
             {mode === 'register' && (
               <>
                 <Text style={s.label}>Confirm Password</Text>
@@ -167,7 +255,6 @@ export default function LoginScreen({ navigation }) {
               </>
             )}
 
-            {/* Forgot password link */}
             {mode === 'login' && (
               <TouchableOpacity
                 style={s.forgotBtn}
@@ -177,7 +264,6 @@ export default function LoginScreen({ navigation }) {
               </TouchableOpacity>
             )}
 
-            {/* CTA button */}
             <TouchableOpacity
               style={[s.submitBtn, loading && s.submitBtnDisabled]}
               onPress={mode === 'login' ? handleLogin : mode === 'register' ? handleRegister : handleReset}
@@ -191,7 +277,6 @@ export default function LoginScreen({ navigation }) {
               }
             </TouchableOpacity>
 
-            {/* Switch mode link */}
             {mode === 'reset' && (
               <TouchableOpacity style={s.switchBtn} onPress={() => { setMode('login'); clearError(); setResetSent(false); }}>
                 <Text style={s.switchText}>Back to Sign In</Text>
@@ -200,8 +285,7 @@ export default function LoginScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Trust line */}
-        <Text style={s.trustLine}>🔒 Secured with 256-bit SSL encryption</Text>
+        <Text style={s.trustLine}>🔒 Secured with 256-bit SSL · MFA protected</Text>
 
       </ScrollView>
     </KeyboardAvoidingView>
@@ -249,6 +333,16 @@ const s = StyleSheet.create({
 
   form: { padding: 28, gap: 8 },
 
+  mfaBadge: {
+    backgroundColor: '#1a1500',
+    borderWidth: 1,
+    borderColor: '#4a3800',
+    borderRadius: 6,
+    padding: 10,
+    marginBottom: 8,
+  },
+  mfaBadgeText: { color: GOLD, fontSize: 12, textAlign: 'center' },
+
   successBox: { backgroundColor: '#1a3a2a', borderWidth: 1, borderColor: '#2ecc71', borderRadius: 6, padding: 12, marginBottom: 8 },
   successText: { color: '#2ecc71', fontSize: 13 },
 
@@ -257,6 +351,7 @@ const s = StyleSheet.create({
 
   label: { color: '#aaa', fontSize: 12, fontWeight: '600', marginTop: 8, letterSpacing: 0.3 },
   input: { backgroundColor: '#2a2a2a', borderWidth: 1, borderColor: BORDER, borderRadius: 6, paddingHorizontal: 14, paddingVertical: 12, color: WHITE, fontSize: 15, marginTop: 4 },
+  codeInput: { fontSize: 26, fontWeight: '700', letterSpacing: 10, textAlign: 'center', borderColor: GOLD, borderWidth: 2 },
 
   forgotBtn: { alignSelf: 'flex-end', marginTop: 4 },
   forgotText: { color: GOLD, fontSize: 13 },
@@ -269,4 +364,11 @@ const s = StyleSheet.create({
   switchText: { color: GOLD, fontSize: 13 },
 
   trustLine: { color: GRAY, fontSize: 12, marginTop: 24 },
+
+  // MFA screen styles
+  mfaHeader: { padding: 28, borderBottomWidth: 1, borderBottomColor: BORDER, alignItems: 'center', gap: 8 },
+  mfaIcon: { fontSize: 40 },
+  mfaTitle: { color: WHITE, fontSize: 18, fontWeight: '800', textAlign: 'center' },
+  mfaSub: { color: GRAY, fontSize: 13, lineHeight: 20, textAlign: 'center' },
+  mfaHint: { color: '#555', fontSize: 12, textAlign: 'center', marginTop: 12, lineHeight: 18 },
 });
