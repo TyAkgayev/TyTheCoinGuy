@@ -11,7 +11,15 @@ import { collection, query, where, getDocs, orderBy, doc, getDoc } from 'firebas
 import { auth, db } from './firebaseConfig';
 import LoginScreen from './screens/LoginScreen';
 import AdminConsole from './screens/AdminConsole';
+import MfaEnrollScreen from './screens/MfaEnrollScreen';
+import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
+import SecurityPolicyScreen from './screens/SecurityPolicyScreen';
+import DataRetentionScreen from './screens/DataRetentionScreen';
+import TermsScreen from './screens/TermsScreen';
+import AccessControlScreen from './screens/AccessControlScreen';
+import MfaPolicyScreen from './screens/MfaPolicyScreen';
 import { IMAGES } from './config/images';
+import { Image as ExpoImage } from 'expo-image';
 
 const Stack = createNativeStackNavigator();
 
@@ -43,11 +51,23 @@ const categories = [
 ];
 
 const FOOTER_LINKS = [
-  { title: 'CUSTOMER CARE', links: ['My Account','Contact Us','FAQ','Privacy Policy','California Notice At Collection','Terms & Conditions','SMS Terms & Conditions','Accessibility'] },
+  { title: 'CUSTOMER CARE', links: ['My Account','Contact Us','FAQ','Privacy Policy','Terms & Conditions','Security Policy','Access Control Policy','MFA Policy','Data Retention Policy','California Notice At Collection','Accessibility'] },
   { title: 'MY ACCOUNT', links: ['Account Login','Track an Order','Order History','Price Alerts','Storage'] },
   { title: 'ABOUT US', links: ['About TyTheCoinGuy','Careers','Shipping & Insurance','Payment Methods','Reviews','Mints'] },
   { title: 'INFO', links: ['Blog','Investing Guide','Silver Prices','Gold Price','Local Directory','Coin Values','Sales Tax'] },
 ];
+
+const FOOTER_LINK_ROUTES = {
+  'Privacy Policy': 'PrivacyPolicy',
+  'California Notice At Collection': 'PrivacyPolicy',
+  'Terms & Conditions': 'Terms',
+  'SMS Terms & Conditions': 'Terms',
+  'Account Login': 'Login',
+  'Security Policy': 'SecurityPolicy',
+  'Access Control Policy': 'AccessControl',
+  'MFA Policy': 'MfaPolicy',
+  'Data Retention Policy': 'DataRetention',
+};
 
 const PAYMENT_METHODS = ['VISA','MC','AMEX','DISCOVER','PAYPAL','BITCOIN','CHECK','WIRE'];
 const PAYMENT_COLORS = { VISA:'#1a1f71', MC:'#eb001b', AMEX:'#007bc1', DISCOVER:'#f76f20', PAYPAL:'#003087', BITCOIN:'#f7931a', CHECK:'#2a7a2a', WIRE:'#555' };
@@ -149,28 +169,34 @@ function BannerCarousel({ slides }) {
       {containerWidth > 0 && (
         <Animated.View style={{ flexDirection: 'row', width: containerWidth * slides.length, transform: [{ translateX: slideAnim }] }}>
           {slides.map((slide, i) => (
-            <View key={i} style={{ width: containerWidth, backgroundColor: slide.bg, flexDirection: isMobile ? 'column' : 'row', paddingVertical: isMobile ? 32 : 40, paddingHorizontal: isMobile ? 24 : 40, minHeight: isMobile ? 260 : 280, alignItems: 'center', justifyContent: 'center', gap: 20, overflow: 'hidden' }}>
-              {/* Full background image — Firestore imageUrl takes priority, then local IMAGES config */}
-              {(slide.imageUrl || slide.image) ? (
-                <Image source={slide.imageUrl ? { uri: slide.imageUrl } : slide.image} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} resizeMode="cover" />
-              ) : null}
-              <View style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: slide.imageUrl ? 'rgba(0,0,0,0.45)' : 'transparent' }]} />
-
-              <View style={[s.heroLeft, { alignItems: isMobile ? 'center' : 'flex-start', zIndex: 1 }]}>
-                <Text style={[s.heroTitle, { textAlign: isMobile ? 'center' : 'left', fontSize: isMobile ? 24 : 32 }]}>{slide.title}</Text>
-                <Text style={[s.heroSub, { textAlign: isMobile ? 'center' : 'left' }]}>{slide.sub || slide.subtitle}</Text>
-                <TouchableOpacity style={[s.shopBtn, { alignSelf: isMobile ? 'center' : 'flex-start' }]}>
+            <View key={i} style={{ width: containerWidth, height: isMobile ? 260 : 340, backgroundColor: slide.bg, flexDirection: 'row', paddingVertical: isMobile ? 24 : 40, paddingHorizontal: isMobile ? 20 : 40, alignItems: 'center', overflow: 'hidden' }}>
+              {/* Left: text */}
+              <View style={[s.heroLeft, { alignItems: 'flex-start', zIndex: 1 }]}>
+                <Text style={[s.heroTitle, { fontSize: isMobile ? 20 : 32 }]}>{slide.title}</Text>
+                <Text style={[s.heroSub, { fontSize: isMobile ? 13 : 16 }]}>{slide.sub || slide.subtitle}</Text>
+                <TouchableOpacity style={s.shopBtn}>
                   <Text style={s.shopBtnText}>{slide.btnText}</Text>
                 </TouchableOpacity>
               </View>
 
-              {!isMobile && !slide.imageUrl && !slide.image && (
+              {/* Center: coin image (local) or emoji fallback */}
+              {!isMobile && (
                 <View style={[s.heroCenter, { zIndex: 1 }]}>
-                  <View style={[s.coinOuter, { backgroundColor: slide.coinColor || '#c9a227', shadowColor: slide.coinColor || '#c9a227' }]}>
-                    <View style={[s.coinInner, { backgroundColor: slide.coinInner || '#deb841' }]}>
-                      <Text style={s.coinEmoji}>{slide.emoji || '🪙'}</Text>
+                  {slide.image ? (
+                    <View style={{ width: 240, height: 240, borderRadius: 120, overflow: 'hidden', borderWidth: 4, borderColor: GOLD }}>
+                      <ExpoImage source={slide.image} style={{ width: '100%', height: '100%' }} contentFit="cover" />
                     </View>
-                  </View>
+                  ) : slide.imageUrl ? (
+                    <View style={{ width: 240, height: 240, borderRadius: 120, overflow: 'hidden', borderWidth: 4, borderColor: GOLD }}>
+                      <ExpoImage source={{ uri: slide.imageUrl }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+                    </View>
+                  ) : (
+                    <View style={[s.coinOuter, { backgroundColor: slide.coinColor || '#c9a227' }]}>
+                      <View style={[s.coinInner, { backgroundColor: slide.coinInner || '#deb841' }]}>
+                        <Text style={s.coinEmoji}>{slide.emoji || '🪙'}</Text>
+                      </View>
+                    </View>
+                  )}
                 </View>
               )}
 
@@ -217,11 +243,17 @@ function HomeScreen({ navigation }) {
 
   useEffect(() => {
     return onAuthStateChanged(auth, async (u) => {
-      setUser(u);
       if (u) {
+        const userDoc = await getDoc(doc(db, 'users', u.uid));
+        if (!userDoc.exists() || !userDoc.data().totpEnrolled) {
+          await signOut(auth);
+          return;
+        }
+        setUser(u);
         const token = await u.getIdTokenResult();
         setIsAdmin(!!token.claims.admin);
       } else {
+        setUser(null);
         setIsAdmin(false);
       }
     });
@@ -342,7 +374,7 @@ function HomeScreen({ navigation }) {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            style={{ borderTopWidth: 1, borderTopColor: '#2a2a2a' }}
+            style={{ borderTopWidth: 1, borderTopColor: BORDER }}
             contentContainerStyle={s.nav}
           >
             {navItems.map((item) => (
@@ -458,7 +490,12 @@ function HomeScreen({ navigation }) {
                 <View key={col.title} style={s.footerCol}>
                   <Text style={s.footerColTitle}>{col.title}</Text>
                   {col.links.map(l => (
-                    <TouchableOpacity key={l}><Text style={s.footerLink}>{l}</Text></TouchableOpacity>
+                    <TouchableOpacity
+                      key={l}
+                      onPress={() => FOOTER_LINK_ROUTES[l] ? navigation.navigate(FOOTER_LINK_ROUTES[l]) : null}
+                    >
+                      <Text style={[s.footerLink, FOOTER_LINK_ROUTES[l] && s.footerLinkActive]}>{l}</Text>
+                    </TouchableOpacity>
                   ))}
                 </View>
               ))}
@@ -552,25 +589,25 @@ const s = StyleSheet.create({
   scroll: { flex: 1 },
 
   // Header
-  header: { backgroundColor: DARK, shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 8, elevation: 10 },
+  header: { backgroundColor: WHITE, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, elevation: 4, borderBottomWidth: 1, borderBottomColor: BORDER },
   headerTop: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 12, gap: 16 },
   headerTopMobile: { paddingVertical: 10, gap: 8 },
 
   logo: { flexDirection: 'row', alignItems: 'center', gap: 8, minWidth: 160 },
   logoCircle: { width: 36, height: 36, borderRadius: 18, backgroundColor: GOLD, alignItems: 'center', justifyContent: 'center' },
   logoCircleText: { color: WHITE, fontWeight: '800', fontSize: 13 },
-  logoText: { color: WHITE, fontSize: 17, fontWeight: '700' },
+  logoText: { color: DARK, fontSize: 17, fontWeight: '700' },
 
   searchWrap: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: WHITE, borderRadius: 6, paddingHorizontal: 12, height: 36 },
   searchInput: { flex: 1, fontSize: 13, color: '#333', outlineStyle: 'none' },
   searchIcon: { fontSize: 14 },
 
   actions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  livePricesBtn: { backgroundColor: '#2a2a2a', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 4 },
+  livePricesBtn: { backgroundColor: LIGHT, borderWidth: 1, borderColor: BORDER, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 4 },
   livePricesText: { color: GREEN, fontSize: 12, fontWeight: '600' },
-  actionLink: { color: '#ccc', fontSize: 13 },
-  registerBtn: { borderWidth: 1, borderColor: '#555', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 4 },
-  registerText: { color: WHITE, fontSize: 13 },
+  actionLink: { color: '#555', fontSize: 13 },
+  registerBtn: { borderWidth: 1, borderColor: '#bbb', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 4 },
+  registerText: { color: DARK, fontSize: 13 },
   cartBtn: { backgroundColor: GOLD, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 4 },
   cartText: { color: WHITE, fontWeight: '700', fontSize: 13 },
   adminLink: { borderWidth: 1, borderColor: GOLD, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 4 },
@@ -579,7 +616,7 @@ const s = StyleSheet.create({
   // Nav — centered via flexGrow + justifyContent in contentContainerStyle
   nav: { flexDirection: 'row', flexGrow: 1, justifyContent: 'center' },
   navItem: { paddingHorizontal: 16, paddingVertical: 12 },
-  navText: { color: '#ccc', fontSize: 12, fontWeight: '600', letterSpacing: 0.5 },
+  navText: { color: '#444', fontSize: 12, fontWeight: '600', letterSpacing: 0.5 },
   dealsText: { color: GREEN },
 
   // Ticker
@@ -654,35 +691,36 @@ const s = StyleSheet.create({
   trustSub: { fontSize: 11, color: GRAY },
 
   // Footer
-  footer: { backgroundColor: '#0a0a0a' },
-  footerTop: { flexDirection: 'row', flexWrap: 'wrap', padding: 40, gap: 32, borderBottomWidth: 1, borderBottomColor: '#222' },
+  footer: { backgroundColor: '#f5f5f2' },
+  footerTop: { flexDirection: 'row', flexWrap: 'wrap', padding: 40, gap: 32, borderBottomWidth: 1, borderBottomColor: BORDER },
   footerBrand: { minWidth: 200, maxWidth: 260, gap: 10 },
   footerLogo: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   logoCircleF: { width: 36, height: 36, borderRadius: 18, backgroundColor: GOLD, alignItems: 'center', justifyContent: 'center' },
   logoCircleFText: { color: WHITE, fontWeight: '800', fontSize: 13 },
-  footerLogoText: { color: WHITE, fontSize: 16, fontWeight: '700' },
+  footerLogoText: { color: DARK, fontSize: 16, fontWeight: '700' },
   footerTagline: { color: '#666', fontSize: 13, lineHeight: 20 },
   footerPhone: { color: GOLD, fontSize: 14, fontWeight: '600' },
   footerLinks: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', gap: 24 },
   footerCol: { minWidth: 140, gap: 8 },
-  footerColTitle: { color: WHITE, fontSize: 11, fontWeight: '800', letterSpacing: 1, marginBottom: 4 },
+  footerColTitle: { color: DARK, fontSize: 11, fontWeight: '800', letterSpacing: 1, marginBottom: 4 },
   footerLink: { color: '#666', fontSize: 13, lineHeight: 24 },
+  footerLinkActive: { color: '#333', textDecorationLine: 'underline' },
 
-  footerPayRow: { paddingHorizontal: 40, paddingVertical: 24, borderBottomWidth: 1, borderBottomColor: '#222', gap: 12 },
+  footerPayRow: { paddingHorizontal: 40, paddingVertical: 24, borderBottomWidth: 1, borderBottomColor: BORDER, gap: 12 },
   footerPayTitle: { color: '#888', fontSize: 11, fontWeight: '700', letterSpacing: 1 },
   footerPayBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   payBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 4 },
   payBadgeText: { color: WHITE, fontSize: 11, fontWeight: '700' },
 
-  footerAppRow: { paddingHorizontal: 40, paddingVertical: 24, borderBottomWidth: 1, borderBottomColor: '#222', gap: 12 },
+  footerAppRow: { paddingHorizontal: 40, paddingVertical: 24, borderBottomWidth: 1, borderBottomColor: BORDER, gap: 12 },
   appBtns: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
-  appBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#1a1a1a', borderWidth: 1, borderColor: '#333', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 10 },
+  appBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: WHITE, borderWidth: 1, borderColor: BORDER, borderRadius: 8, paddingHorizontal: 16, paddingVertical: 10 },
   appBtnIcon: { fontSize: 24 },
   appBtnSub: { color: '#888', fontSize: 10 },
-  appBtnMain: { color: WHITE, fontSize: 15, fontWeight: '700' },
+  appBtnMain: { color: DARK, fontSize: 15, fontWeight: '700' },
 
-  footerBottom: { paddingVertical: 20, alignItems: 'center', borderTopWidth: 1, borderTopColor: '#1a1a1a' },
-  footerCopy: { color: '#444', fontSize: 12 },
+  footerBottom: { paddingVertical: 20, alignItems: 'center', borderTopWidth: 1, borderTopColor: BORDER },
+  footerCopy: { color: '#888', fontSize: 12 },
 });
 
 export default function App() {
@@ -692,6 +730,13 @@ export default function App() {
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="AdminConsole" component={AdminConsole} />
+        <Stack.Screen name="MfaEnroll" component={MfaEnrollScreen} />
+        <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+        <Stack.Screen name="SecurityPolicy" component={SecurityPolicyScreen} />
+        <Stack.Screen name="DataRetention" component={DataRetentionScreen} />
+        <Stack.Screen name="AccessControl" component={AccessControlScreen} />
+        <Stack.Screen name="MfaPolicy" component={MfaPolicyScreen} />
+        <Stack.Screen name="Terms" component={TermsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
