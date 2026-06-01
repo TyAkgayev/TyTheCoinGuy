@@ -21,7 +21,7 @@ export const IMAGES = {
   // Each slide can have a background image.  null = coin emoji visual.
   bannerSlides: [
     {
-      image: null,          // Slide 1 – Gold Eagle  (null = 🦅 coin)
+      image: require('../assets/hero/slide1.png'),
       title: '1 oz American\nGold Eagle Coin',
       subtitle: 'As low as $69.99 over spot',
       btnText: 'SHOP NOW',
@@ -31,7 +31,7 @@ export const IMAGES = {
       emoji: '🦅',
     },
     {
-      image: null,          // Slide 2 – Silver Bar  (null = 🪙 coin)
+      image: require('../assets/hero/slide2.png'),
       title: 'Weekend Deal:\n10 oz Silver Bar',
       subtitle: 'Only $279.99 — Limited Time Offer',
       btnText: 'GRAB THE DEAL',
@@ -41,7 +41,7 @@ export const IMAGES = {
       emoji: '🪙',
     },
     {
-      image: null,          // Slide 3 – Free Shipping
+      image: require('../assets/hero/slide3.png'),
       title: 'Free Shipping\nOn Orders Over $499',
       subtitle: 'No code needed — applied automatically at checkout',
       btnText: 'SHOP ALL',
@@ -51,7 +51,7 @@ export const IMAGES = {
       emoji: '🚚',
     },
     {
-      image: null,          // Slide 4 – Sell To Us
+      image: null,          // Slide 4 – Sell To Us  (add slide4.png to swap)
       title: 'Sell Your Metals\nGet Top Dollar',
       subtitle: 'Best payouts guaranteed — we beat any offer',
       btnText: 'GET A QUOTE',
