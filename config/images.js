@@ -15,7 +15,11 @@ export const IMAGES = {
 
   // ── LOGO ──────────────────────────────────────────────────────────────────
   // Shown in the header and footer.  null = "TC" gold circle text fallback.
-  logo: null,
+  logo: require('../assets/logo.png'),
+
+  // ── BANNER BACKGROUND ─────────────────────────────────────────────────────
+  // Full-bleed background image used behind every hero slide.
+  bannerBackground: require('../assets/hero/background.png'),
 
   // ── BANNER CAROUSEL (default slides when none set in Firestore) ───────────
   // Each slide can have a background image.  null = coin emoji visual.

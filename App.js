@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import {
   StyleSheet, Text, View, ScrollView, TouchableOpacity,
-  TextInput, Animated, useWindowDimensions, Image,
+  TextInput, Animated, Easing, useWindowDimensions, Image,
 } from 'react-native';
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { NavigationContainer, useFocusEffect } from '@react-navigation/native';
@@ -153,15 +153,15 @@ function BannerCarousel({ slides }) {
       const next = (currentRef.current + 1) % slides.length;
       currentRef.current = next;
       setCurrent(next);
-      Animated.timing(slideAnim, { toValue: -next * containerWidth, duration: 600, useNativeDriver: true }).start();
-    }, 4000);
+      Animated.timing(slideAnim, { toValue: -next * containerWidth, duration: 1400, easing: Easing.inOut(Easing.ease), useNativeDriver: true }).start();
+    }, 7000);
     return () => clearInterval(timer);
   }, [containerWidth, slides.length]);
 
   const goTo = (idx) => {
     currentRef.current = idx;
     setCurrent(idx);
-    Animated.timing(slideAnim, { toValue: -idx * containerWidth, duration: 500, useNativeDriver: true }).start();
+    Animated.timing(slideAnim, { toValue: -idx * containerWidth, duration: 1400, easing: Easing.inOut(Easing.ease), useNativeDriver: true }).start();
   };
 
   return (
@@ -169,7 +169,13 @@ function BannerCarousel({ slides }) {
       {containerWidth > 0 && (
         <Animated.View style={{ flexDirection: 'row', width: containerWidth * slides.length, transform: [{ translateX: slideAnim }] }}>
           {slides.map((slide, i) => (
-            <View key={i} style={{ width: containerWidth, height: isMobile ? 260 : 340, backgroundColor: slide.bg, flexDirection: 'row', paddingVertical: isMobile ? 24 : 40, paddingHorizontal: isMobile ? 20 : 40, alignItems: 'center', overflow: 'hidden' }}>
+            <View key={i} style={{ width: containerWidth, height: isMobile ? 320 : 440, backgroundColor: slide.bg, flexDirection: 'row', paddingVertical: isMobile ? 28 : 48, paddingHorizontal: isMobile ? 20 : 48, alignItems: 'center', overflow: 'hidden' }}>
+              {/* Full-bleed background */}
+              {IMAGES.bannerBackground && (
+                <Image source={IMAGES.bannerBackground} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} resizeMode="cover" />
+              )}
+              {/* Dark overlay for text readability */}
+              <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.55)' }} />
               {/* Left: text */}
               <View style={[s.heroLeft, { alignItems: 'flex-start', zIndex: 1 }]}>
                 <Text style={[s.heroTitle, { fontSize: isMobile ? 20 : 32 }]}>{slide.title}</Text>
@@ -295,9 +301,10 @@ function HomeScreen({ navigation }) {
           <View style={[s.headerTop, isMobile && s.headerTopMobile]}>
             {/* Logo */}
             <View style={[s.logo, isMobile && { flex: 1 }]}>
-              <View style={s.logoCircle}>
-                <Text style={s.logoCircleText}>TC</Text>
-              </View>
+              {IMAGES.logo
+                ? <Image source={IMAGES.logo} style={{ width: 40, height: 40, borderRadius: 20 }} resizeMode="cover" />
+                : <View style={s.logoCircle}><Text style={s.logoCircleText}>TC</Text></View>
+              }
               <Text style={[s.logoText, isMobile && { fontSize: 15 }]}>TyTheCoinGuy</Text>
             </View>
 
@@ -479,7 +486,10 @@ function HomeScreen({ navigation }) {
           <View style={s.footerTop}>
             <View style={s.footerBrand}>
               <View style={s.footerLogo}>
-                <View style={s.logoCircleF}><Text style={s.logoCircleFText}>TC</Text></View>
+                {IMAGES.logo
+                  ? <Image source={IMAGES.logo} style={{ width: 36, height: 36, borderRadius: 18 }} resizeMode="cover" />
+                  : <View style={s.logoCircleF}><Text style={s.logoCircleFText}>TC</Text></View>
+                }
                 <Text style={s.footerLogoText}>TyTheCoinGuy</Text>
               </View>
               <Text style={s.footerTagline}>America's trusted precious metals dealer.</Text>
