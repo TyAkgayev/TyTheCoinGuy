@@ -51,7 +51,7 @@ export const IMAGES = {
       emoji: '🚚',
     },
     {
-      image: null,          // Slide 4 – Sell To Us  (add slide4.png to swap)
+      image: require('../assets/hero/slide4.png'),
       title: 'Sell Your Metals\nGet Top Dollar',
       subtitle: 'Best payouts guaranteed — we beat any offer',
       btnText: 'GET A QUOTE',
