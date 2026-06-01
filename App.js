@@ -796,17 +796,17 @@ const s = StyleSheet.create({
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="AdminConsole" component={AdminConsole} />
-        <Stack.Screen name="MfaEnroll" component={MfaEnrollScreen} />
-        <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
-        <Stack.Screen name="SecurityPolicy" component={SecurityPolicyScreen} />
-        <Stack.Screen name="DataRetention" component={DataRetentionScreen} />
-        <Stack.Screen name="AccessControl" component={AccessControlScreen} />
-        <Stack.Screen name="MfaPolicy" component={MfaPolicyScreen} />
-        <Stack.Screen name="Terms" component={TermsScreen} />
+      <Stack.Navigator screenOptions={{ headerShown: false, title: 'TyTheCoinGuy' }}>
+        <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'TyTheCoinGuy' }} />
+        <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'TyTheCoinGuy — Sign In' }} />
+        <Stack.Screen name="AdminConsole" component={AdminConsole} options={{ title: 'TyTheCoinGuy — Admin' }} />
+        <Stack.Screen name="MfaEnroll" component={MfaEnrollScreen} options={{ title: 'TyTheCoinGuy' }} />
+        <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ title: 'Privacy Policy — TyTheCoinGuy' }} />
+        <Stack.Screen name="SecurityPolicy" component={SecurityPolicyScreen} options={{ title: 'Security Policy — TyTheCoinGuy' }} />
+        <Stack.Screen name="DataRetention" component={DataRetentionScreen} options={{ title: 'Data Retention — TyTheCoinGuy' }} />
+        <Stack.Screen name="AccessControl" component={AccessControlScreen} options={{ title: 'Access Control — TyTheCoinGuy' }} />
+        <Stack.Screen name="MfaPolicy" component={MfaPolicyScreen} options={{ title: 'MFA Policy — TyTheCoinGuy' }} />
+        <Stack.Screen name="Terms" component={TermsScreen} options={{ title: 'Terms & Conditions — TyTheCoinGuy' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
