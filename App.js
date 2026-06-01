@@ -548,34 +548,81 @@ function HomeScreen({ navigation }) {
   );
 }
 
+function ProductCard({ p, showSale }) {
+  const [qty, setQty] = useState('1');
+  const displayPrice = showSale && p.salePrice ? p.salePrice : p.price;
+  return (
+    <View style={s.productCard}>
+      {/* Image */}
+      <View style={s.productImgBox}>
+        {p.imageUrl
+          ? <ExpoImage source={{ uri: p.imageUrl }} style={{ width: '100%', height: '100%' }} contentFit="contain" />
+          : IMAGES.productPlaceholder
+            ? <ExpoImage source={IMAGES.productPlaceholder} style={{ width: '100%', height: '100%' }} contentFit="contain" />
+            : <Text style={s.productEmoji}>🪙</Text>}
+      </View>
+
+      {/* Info */}
+      <View style={s.productCardBody}>
+        <Text style={s.productName} numberOfLines={3}>{p.name}</Text>
+
+        <View style={s.productPriceRow}>
+          {showSale && p.salePrice ? (
+            <>
+              <Text style={s.productAsLow}>As low as: </Text>
+              <Text style={{ color: '#aaa', fontSize: 13, textDecorationLine: 'line-through', marginRight: 6 }}>
+                ${Number(p.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              </Text>
+              <Text style={[s.productPriceVal, { color: '#e74c3c' }]}>
+                ${Number(p.salePrice).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text style={s.productAsLow}>As low as: </Text>
+              <Text style={s.productPriceVal}>
+                ${Number(p.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              </Text>
+            </>
+          )}
+        </View>
+
+        <View style={s.productStockRow}>
+          <View style={s.stockDot} />
+          <Text style={s.stockText}>{p.inStock !== false ? 'In Stock' : 'Out of Stock'}</Text>
+        </View>
+
+        <View style={s.productCartRow}>
+          <View style={s.qtyWrap}>
+            <Text style={s.qtyLabel}>Qty</Text>
+            <TextInput
+              style={s.qtyInput}
+              value={qty}
+              onChangeText={v => setQty(v.replace(/[^0-9]/g, '') || '1')}
+              keyboardType="number-pad"
+              selectTextOnFocus
+            />
+          </View>
+          <TouchableOpacity style={s.addToCartBtn}>
+            <Text style={s.addToCartText}>Add to Cart</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 function ProductSection({ title, products, emptyMsg, accent, showSale }) {
   return (
     <View style={s.section}>
       <Text style={[s.sectionTitle, accent && { color: accent }]}>{title}</Text>
       <View style={s.productRow}>
         <TouchableOpacity style={s.arrowBtn}><Text style={s.arrowText}>‹</Text></TouchableOpacity>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.productScroll} contentContainerStyle={{ paddingHorizontal: 8, alignItems: 'center' }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.productScroll} contentContainerStyle={{ paddingHorizontal: 8, paddingVertical: 12, alignItems: 'flex-start' }}>
           {products.length === 0 ? (
             <View style={{ padding: 24 }}><Text style={{ color: '#aaa', fontSize: 13 }}>{emptyMsg}</Text></View>
           ) : products.map(p => (
-            <TouchableOpacity key={p.id} style={s.productCard}>
-              <View style={[s.productImgBox, { backgroundColor: metalBg[p.metal] || '#f0f0f0' }]}>
-                {p.imageUrl
-                  ? <Image source={{ uri: p.imageUrl }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-                  : IMAGES.productPlaceholder
-                    ? <Image source={IMAGES.productPlaceholder} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
-                    : <Text style={s.productEmoji}>🪙</Text>}
-              </View>
-              <Text style={s.productName}>{p.name}</Text>
-              {showSale && p.salePrice ? (
-                <View style={{ alignItems: 'center' }}>
-                  <Text style={{ color: '#aaa', fontSize: 12, textDecorationLine: 'line-through' }}>${Number(p.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
-                  <Text style={[s.productPrice, { color: '#e74c3c' }]}>${Number(p.salePrice).toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
-                </View>
-              ) : (
-                <Text style={s.productPrice}>${Number(p.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
-              )}
-            </TouchableOpacity>
+            <ProductCard key={p.id} p={p} showSale={showSale} />
           ))}
         </ScrollView>
         <TouchableOpacity style={s.arrowBtn}><Text style={s.arrowText}>›</Text></TouchableOpacity>
@@ -669,11 +716,24 @@ const s = StyleSheet.create({
   arrowBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: LIGHT, borderWidth: 1, borderColor: BORDER, alignItems: 'center', justifyContent: 'center', zIndex: 1 },
   arrowText: { fontSize: 22, color: '#555', lineHeight: 28 },
   productScroll: { flex: 1 },
-  productCard: { width: 160, marginHorizontal: 8, backgroundColor: WHITE, borderWidth: 1, borderColor: BORDER, borderRadius: 6, overflow: 'hidden', alignItems: 'center', paddingBottom: 12 },
-  productImgBox: { width: '100%', height: 140, alignItems: 'center', justifyContent: 'center' },
+  productCard: { width: 200, marginHorizontal: 8, backgroundColor: WHITE, borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 8, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } },
+  productImgBox: { width: '100%', height: 180, backgroundColor: '#f8f8f8', alignItems: 'center', justifyContent: 'center' },
+  productCardBody: { padding: 12, gap: 8 },
   productEmoji: { fontSize: 64 },
-  productName: { fontSize: 12, color: '#333', textAlign: 'center', paddingHorizontal: 8, paddingTop: 8, lineHeight: 16 },
-  productPrice: { fontSize: 15, fontWeight: '700', color: '#222', marginTop: 6 },
+  productName: { fontSize: 13, fontWeight: '600', color: '#222', textAlign: 'center', lineHeight: 18 },
+  productPriceRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' },
+  productAsLow: { fontSize: 12, color: '#666' },
+  productPriceVal: { fontSize: 14, fontWeight: '700', color: '#222' },
+  productPrice: { fontSize: 14, fontWeight: '700', color: '#222' },
+  productStockRow: { flexDirection: 'row', alignItems: 'center', gap: 5, justifyContent: 'center' },
+  stockDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#27ae60', alignItems: 'center', justifyContent: 'center' },
+  stockText: { fontSize: 12, color: '#27ae60', fontWeight: '600' },
+  productCartRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
+  qtyWrap: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#ccc', borderRadius: 4, overflow: 'hidden', height: 34 },
+  qtyLabel: { paddingHorizontal: 8, color: '#666', fontSize: 12, backgroundColor: '#f5f5f5', height: '100%', lineHeight: 34 },
+  qtyInput: { width: 36, textAlign: 'center', fontSize: 13, color: '#222', height: '100%', outlineStyle: 'none' },
+  addToCartBtn: { flex: 1, backgroundColor: GOLD, borderRadius: 4, height: 34, alignItems: 'center', justifyContent: 'center' },
+  addToCartText: { color: WHITE, fontWeight: '700', fontSize: 12 },
 
   // Why section
   whySection: { backgroundColor: LIGHT, paddingVertical: 40, paddingHorizontal: 24, marginTop: 8 },
