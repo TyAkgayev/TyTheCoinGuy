@@ -189,11 +189,11 @@ function BannerCarousel({ slides }) {
               {!isMobile && (
                 <View style={[s.heroCenter, { zIndex: 1 }]}>
                   {slide.image ? (
-                    <View style={{ width: 240, height: 240, borderRadius: 120, overflow: 'hidden', borderWidth: 4, borderColor: GOLD }}>
+                    <View style={{ width: 240, height: 240, borderRadius: 120, overflow: 'hidden', borderWidth: 4, borderColor: GOLD, backgroundColor: '#1a1a1a' }}>
                       <ExpoImage source={slide.image} style={{ width: '100%', height: '100%' }} contentFit="cover" />
                     </View>
                   ) : slide.imageUrl ? (
-                    <View style={{ width: 240, height: 240, borderRadius: 120, overflow: 'hidden', borderWidth: 4, borderColor: GOLD }}>
+                    <View style={{ width: 240, height: 240, borderRadius: 120, overflow: 'hidden', borderWidth: 4, borderColor: GOLD, backgroundColor: '#1a1a1a' }}>
                       <ExpoImage source={{ uri: slide.imageUrl }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
                     </View>
                   ) : (
@@ -628,7 +628,7 @@ function ProductSection({ title, products, emptyMsg, accent, showSale }) {
       <Text style={[s.sectionTitle, accent && { color: accent }]}>{title}</Text>
       <View style={s.productRow}>
         <TouchableOpacity style={s.arrowBtn}><Text style={s.arrowText}>‹</Text></TouchableOpacity>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.productScroll} contentContainerStyle={{ paddingHorizontal: 8, paddingVertical: 12, alignItems: 'flex-start' }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.productScroll} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 8, paddingVertical: 12, alignItems: 'flex-start' }}>
           {products.length === 0 ? (
             <View style={{ padding: 24 }}><Text style={{ color: '#aaa', fontSize: 13 }}>{emptyMsg}</Text></View>
           ) : products.map(p => (
