@@ -250,14 +250,19 @@ function HomeScreen({ navigation }) {
   useEffect(() => {
     return onAuthStateChanged(auth, async (u) => {
       if (u) {
+        const token = await u.getIdTokenResult();
+        if (token.claims.admin) {
+          setUser(u);
+          setIsAdmin(true);
+          return;
+        }
         const userDoc = await getDoc(doc(db, 'users', u.uid));
         if (!userDoc.exists() || !userDoc.data().totpEnrolled) {
           await signOut(auth);
           return;
         }
         setUser(u);
-        const token = await u.getIdTokenResult();
-        setIsAdmin(!!token.claims.admin);
+        setIsAdmin(false);
       } else {
         setUser(null);
         setIsAdmin(false);
