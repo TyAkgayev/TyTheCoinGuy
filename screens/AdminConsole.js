@@ -169,9 +169,9 @@ function ProductsTab() {
         try {
           const up = await withTimeout(uploadImageFile(imageUri, 'products'), 15000);
           imageUrl = up.url; imagePath = up.path;
-        } catch {
-          setError('Image upload failed — saving without image.');
-          await new Promise(r => setTimeout(r, 1500));
+        } catch (uploadErr) {
+          setError('Image upload failed: ' + (uploadErr?.message || String(uploadErr)));
+          await new Promise(r => setTimeout(r, 3000));
         }
       }
       const data = {

@@ -44,3 +44,4 @@ dist/
 # Firebase admin — never commit these
 serviceAccountKey.json
 scripts/createAdminUsers.js
+.vercel
